@@ -9,11 +9,18 @@
 
 // Import the interfaces
 #import "HelloWorldLayer.h"
+#import "CCCoverFlowLayer.h"
+#import "CCCircularSelector.h"
 
+#import "CCCoverFlowSprite.h"
 // Needed to obtain the Navigation Controller
 #import "AppDelegate.h"
 
 #pragma mark - HelloWorldLayer
+
+@interface HelloWorldLayer () <CCCoverFlowLayerDelegate,CCCoverFlowLayerDataSource>
+
+@end
 
 // HelloWorldLayer implementation
 @implementation HelloWorldLayer
@@ -42,80 +49,31 @@
 	if( (self=[super init]) ) {
 		
 		// create and initialize a Label
-		CCLabelTTF *label = [CCLabelTTF labelWithString:@"Hello World" fontName:@"Marker Felt" fontSize:64];
-
-		// ask director for the window size
-		CGSize size = [[CCDirector sharedDirector] winSize];
-	
-		// position the label on the center of the screen
-		label.position =  ccp( size.width /2 , size.height/2 );
+        NSMutableArray * items = [NSMutableArray array];
+        for (int i = 0; i < 100; i++) {
+            [items addObject:[CCSprite spriteWithFile:@"Icon.png"]];
+        }
+        //CCCircularSelector * layer = [[CCCircularSelector alloc]initWithChoices:items];
+        
+        CCCoverFlowLayer * coverlayer = [[CCCoverFlowLayer alloc]init];
+        
+        coverlayer.dataSource = self;
+        coverlayer.delegate = self;
+        
+		//layer.position = ccp(self.contentSize.width/2, self.contentSize.height/2);
+        
+        coverlayer.position = ccp(0, 0);
+        coverlayer.anchorPoint = ccp(0, 0);
+		// add the Layer as a child to this Layer
+	//	[self addChild: layer];
+        [self addChild: coverlayer];
 		
-		// add the label as a child to this Layer
-		[self addChild: label];
-		
-		
-		
-		//
-		// Leaderboards and Achievements
-		//
-		
-		// Default font size will be 28 points.
-		[CCMenuItemFont setFontSize:28];
-		
-		// to avoid a retain-cycle with the menuitem and blocks
-		__block id copy_self = self;
-		
-		// Achievement Menu Item using blocks
-		CCMenuItem *itemAchievement = [CCMenuItemFont itemWithString:@"Achievements" block:^(id sender) {
-			
-			
-			GKAchievementViewController *achivementViewController = [[GKAchievementViewController alloc] init];
-			achivementViewController.achievementDelegate = copy_self;
-			
-			AppController *app = (AppController*) [[UIApplication sharedApplication] delegate];
-			
-			[[app navController] presentModalViewController:achivementViewController animated:YES];
-			
-			[achivementViewController release];
-		}];
-		
-		// Leaderboard Menu Item using blocks
-		CCMenuItem *itemLeaderboard = [CCMenuItemFont itemWithString:@"Leaderboard" block:^(id sender) {
-			
-			
-			GKLeaderboardViewController *leaderboardViewController = [[GKLeaderboardViewController alloc] init];
-			leaderboardViewController.leaderboardDelegate = copy_self;
-			
-			AppController *app = (AppController*) [[UIApplication sharedApplication] delegate];
-			
-			[[app navController] presentModalViewController:leaderboardViewController animated:YES];
-			
-			[leaderboardViewController release];
-		}];
-
-		
-		CCMenu *menu = [CCMenu menuWithItems:itemAchievement, itemLeaderboard, nil];
-		
-		[menu alignItemsHorizontallyWithPadding:20];
-		[menu setPosition:ccp( size.width/2, size.height/2 - 50)];
-		
-		// Add the menu to the layer
-		[self addChild:menu];
 
 	}
 	return self;
 }
 
 // on "dealloc" you need to release all your retained objects
-- (void) dealloc
-{
-	// in case you have something to dealloc, do it in this method
-	// in this particular example nothing needs to be released.
-	// cocos2d will automatically release all the children (Label)
-	
-	// don't forget to call "super dealloc"
-	[super dealloc];
-}
 
 #pragma mark GameKit delegate
 
@@ -129,5 +87,24 @@
 {
 	AppController *app = (AppController*) [[UIApplication sharedApplication] delegate];
 	[[app navController] dismissModalViewControllerAnimated:YES];
+}
+#pragma mark -CCCoverFlowLayerDataSource
+-(NSUInteger)numberOfItems:(CCCoverFlowLayer *)layer
+{
+    return 1;
+}
+-(CCNode*)coverFlow:(CCCoverFlowLayer *)layer nodeForItemAtIndex:(NSUInteger)index
+{
+    
+    CCCoverFlowSprite * sprite = (CCCoverFlowSprite *)[layer reuseSpriteForIndex:index];
+    if (sprite == nil) {
+        sprite = [[CCCoverFlowSprite alloc]initWithFile:@"Icon.png"];
+    }
+    return sprite;
+}
+#pragma mark - CCCoverFlowLayerDelegate
+-(void)coverFlow:(CCCoverFlowLayer *)layer didSelectItemAtIndex:(NSUInteger)index
+{
+    
 }
 @end
