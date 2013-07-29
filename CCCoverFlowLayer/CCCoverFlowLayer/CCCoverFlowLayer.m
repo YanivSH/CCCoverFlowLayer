@@ -119,6 +119,11 @@
     [self drawOnDemand];
 
     [[CCDirector sharedDirector] setProjection:kCCDirectorProjection3D];
+    
+//    CCSprite * node = [self getNodeAtIndex:0];
+//    node.scale = 5.0f;
+//    [node runAction:[CCOrbitCamera actionWithDuration:2 radius:1 deltaRadius:0 angleZ:0 deltaAngleZ:-70 angleX:0 deltaAngleX:0]];
+
 }
 -(void)onExit
 {
@@ -133,15 +138,7 @@
 }
 -(void)update:(ccTime)delta
 {
-    CCSprite * node = [self getNodeAtIndex:0];
- 
    
-    
-    x += 0.1;
-    
-    [node setScale:5.0];
-
-    [node.camera setEyeX:0 eyeY:0 eyeZ:1];// setCenterX:0 centerY:x * -1 centerZ:1];
 }
 #pragma mark -
 -(void)drawOnDemand
@@ -189,10 +186,9 @@
 	double sc = 0.45 * (1 - fabs(f));
 	trans += f * 1;
 	CGPoint center =  ccp(self.contentSize.width/2,self.contentSize.height/2);
-    center.x += trans * 100;
+    center.x += trans * 100; 
 
-
-
+    NSLog(@"trans = %lf sc = %lf",trans,sc);
    // [node.camera setCenterX:trans*100 centerY:0 centerZ:10];
     node.position = center;
     
@@ -312,6 +308,50 @@
 		_lastPos = pos;
 	}
 
+    CCSprite * node = [self getNodeAtIndex:0];
+    
+    
+    for( UITouch *touch in touches ) {
+        CGPoint touchLocation = [touch locationInView: [touch view]];
+        CGPoint prevLocation = [touch previousLocationInView: [touch view]];
+        
+        touchLocation = [[CCDirector sharedDirector] convertToGL: touchLocation];
+        prevLocation = [[CCDirector sharedDirector] convertToGL: prevLocation];
+        
+        CGPoint diff = ccpSub(touchLocation,prevLocation);
+       // [node setPosition: ccpAdd(node.position, diff)];
+        
+        // Get the camera's current values.
+        float centerX, centerY, centerZ;
+        float eyeX, eyeY, eyeZ;
+        [node.camera centerX:&centerX centerY:&centerY centerZ:&centerZ];
+        [node.camera eyeX:&eyeX eyeY:&eyeY eyeZ:&eyeZ];
+        
+        // Increment panning value based on current zoom factor.
+        diff.x = 2 * diff.x * (1+(eyeZ/832));
+        diff.y = 2 * diff.y * (1+(eyeZ/832));
+        
+        // Round values to avoid subpixeling.
+        int newX = centerX-round(diff.x);
+        int newY = centerY-round(diff.y);
+
+        float angle = CC_RADIANS_TO_DEGREES(atan2(node.position.y - touchLocation.y, node.position.x - touchLocation.x));
+        
+        angle += 90;
+        angle *= -1;
+        
+       
+        if (fabs(angle) > 70) {
+            return;
+        }
+        // NSLog(@"%f",angle);
+//
+       // [node setScaleX:angle];
+        // Set values.
+        //[node.camera setCenterX:angle centerY:0 centerZ:10];
+        
+        [node.camera setEyeX:angle eyeY:0 eyeZ:10];
+    }
 }
 -(void)ccTouchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
@@ -336,12 +376,17 @@
 
 		double time = CACurrentMediaTime();
 		double speed = (_lastPos - pos)/(time - _startTime);
+        NSLog(@"speed = %f",speed);
 		if (speed > MAXSPEED) speed = MAXSPEED;
 		if (speed < -MAXSPEED) speed = -MAXSPEED;
 		
        		//[self startAnimation:speed];
 	}
 
+}
+-(void)touchMoved
+{
+    
 }
 
 
